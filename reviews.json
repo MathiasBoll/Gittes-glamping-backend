@@ -1,0 +1,42 @@
+[
+    {
+      "_id": "6526a5b92385a3f5d55f8526",
+      "name": "Lise",
+      "age": 34,
+      "image": "https://glamping-rqu9j.ondigitalocean.app//reviews/no-review.jpg",
+      "review": "Min kæreste og jeg fejrede vores årsdag med et ophold ved Gittes Glamping. Det vil vi helt sikkert gøre igen. Personalet var virkelig søde og servicemindede, og maden og stemningen  var i top.",
+      "stay": "Romantisk Getaway",
+      "created": "2025-11-26T13:05:05.838Z",
+      "__v": 0
+    },
+    {
+      "_id": "6526a5c42385a3f5d55f8528",
+      "name": "Johanne",
+      "age": 22,
+      "image": "https://glamping-rqu9j.ondigitalocean.app//reviews/no-review.jpg",
+      "review": "Jeg blev inviteret med af min veninde. Det var første gang jeg prøvede glamping. Jeg var lidt skeptisk, da jeg ikke bryder mig om at sove udenfor. Men jeg blev positivt overrasket. Sengene var gode, og det var slet ikke ubehageligt at vågne op i teltet, som det ellers plejer at være i et  normalt telt. ",
+      "stay": "Weekendtur",
+      "created": "2025-11-26T13:05:05.838Z",
+      "__v": 0
+    },
+    {
+      "_id": "6526a5ca2385a3f5d55f852a",
+      "name": "Banjamin",
+      "age": 42,
+      "image": "https://glamping-rqu9j.ondigitalocean.app//reviews/no-review.jpg",
+      "review": "Top karakter til Gittes Glamping herfra! perfekte blanding af primitivt og luksuriøst. Og ungerne elskede det!",
+      "stay": "Familiepakken",
+      "created": "2025-11-26T13:05:05.838Z",
+      "__v": 0
+    },
+    {
+      "_id": "6526a5d92385a3f5d55f852c",
+      "name": "Peter",
+      "age": 61,
+      "image": "https://glamping-rqu9j.ondigitalocean.app//reviews/no-review.jpg",
+      "review": "Jeg havde en rigtig hyggelig weekend, og maden er i særdeleshed en oplevelse værd. Min hustru synes kanoturen var rigtig idyllisk. Jeg er dog ikke så vild med at sejle.",
+      "stay": "Weekendtur",
+      "created": "2025-11-26T13:05:05.838Z",
+      "__v": 0
+    }
+  ]
