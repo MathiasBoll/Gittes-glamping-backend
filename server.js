@@ -104,10 +104,269 @@ server.get('/reviews', (req, res) => {
 });
 
 // ──────────────────────────────────────────────
+// REVIEWS – hjælpefunktion til at gemme
+// ──────────────────────────────────────────────
+const REVIEWS_PATH = path.join(__dirname, 'reviews.json');
+const saveReviews = () => {
+    fs.writeFileSync(REVIEWS_PATH, JSON.stringify(reviews, null, 2));
+};
+
+// ──────────────────────────────────────────────
+// REVIEWS – POST (opret ny anmeldelse)
+// ──────────────────────────────────────────────
+server.post('/reviews', (req, res) => {
+    const { name, age, stay, review } = req.body;
+    if (!name || !review) {
+        return res.status(400).json({ error: 'name og review er påkrævet' });
+    }
+    const newReview = {
+        id: generateId(),
+        name,
+        age: age || '',
+        stay: stay || '',
+        review,
+        isVisible: true,
+        created: new Date().toISOString(),
+    };
+    reviews.push(newReview);
+    saveReviews();
+    res.status(201).json(newReview);
+});
+
+// ──────────────────────────────────────────────
+// REVIEWS – PUT (opdater anmeldelse)
+// ──────────────────────────────────────────────
+server.put('/reviews/:id', (req, res) => {
+    const index = reviews.findIndex(r =>
+        String(r.id) === String(req.params.id) ||
+        String(r._id) === String(req.params.id)
+    );
+    if (index === -1) return res.status(404).json({ error: 'Anmeldelse ikke fundet' });
+    const existingId = reviews[index].id || reviews[index]._id;
+    reviews[index] = { ...reviews[index], ...req.body };
+    if (reviews[index]._id !== undefined) reviews[index]._id = existingId;
+    else reviews[index].id = existingId;
+    saveReviews();
+    res.json(reviews[index]);
+});
+
+// ──────────────────────────────────────────────
+// REVIEWS – DELETE (slet anmeldelse)
+// ──────────────────────────────────────────────
+server.delete('/reviews/:id', (req, res) => {
+    const index = reviews.findIndex(r =>
+        String(r.id) === String(req.params.id) ||
+        String(r._id) === String(req.params.id)
+    );
+    if (index === -1) return res.status(404).json({ error: 'Anmeldelse ikke fundet' });
+    reviews.splice(index, 1);
+    saveReviews();
+    res.json({ message: 'Anmeldelse slettet' });
+});
+
+// ──────────────────────────────────────────────
 // STAYS – GET alle
 // ──────────────────────────────────────────────
 server.get('/stays', (req, res) => {
     res.json(stays);
+});
+
+// ──────────────────────────────────────────────
+// STAYS – hjælpefunktion til at gemme
+// ──────────────────────────────────────────────
+const STAYS_PATH = path.join(__dirname, 'stays.json');
+const saveStays = () => {
+    fs.writeFileSync(STAYS_PATH, JSON.stringify(stays, null, 2));
+};
+
+// ──────────────────────────────────────────────
+// STAYS – POST (opret nyt ophold)
+// ──────────────────────────────────────────────
+server.post('/stays', (req, res) => {
+    const { title, numberOfPersons, price, image, teaser } = req.body;
+    if (!title || !numberOfPersons || !price || !image) {
+        return res.status(400).json({ error: 'title, numberOfPersons, price og image er påkrævet' });
+    }
+    const newStay = {
+        id: generateId(),
+        title,
+        teaser: teaser || '',
+        numberOfPersons,
+        price,
+        image,
+        isActive: true,
+        created: new Date().toISOString(),
+    };
+    stays.push(newStay);
+    saveStays();
+    res.status(201).json(newStay);
+});
+
+// ──────────────────────────────────────────────
+// STAYS – PUT (opdater ophold)
+// ──────────────────────────────────────────────
+server.put('/stays/:id', (req, res) => {
+    const index = stays.findIndex(s =>
+        String(s.id) === String(req.params.id) ||
+        String(s._id) === String(req.params.id)
+    );
+    if (index === -1) return res.status(404).json({ error: 'Ophold ikke fundet' });
+    const existingId = stays[index].id || stays[index]._id;
+    stays[index] = { ...stays[index], ...req.body };
+    if (stays[index]._id !== undefined) stays[index]._id = existingId;
+    else stays[index].id = existingId;
+    saveStays();
+    res.json(stays[index]);
+});
+
+// ──────────────────────────────────────────────
+// STAYS – DELETE (slet ophold)
+// ──────────────────────────────────────────────
+server.delete('/stays/:id', (req, res) => {
+    const index = stays.findIndex(s =>
+        String(s.id) === String(req.params.id) ||
+        String(s._id) === String(req.params.id)
+    );
+    if (index === -1) return res.status(404).json({ error: 'Ophold ikke fundet' });
+    stays.splice(index, 1);
+    saveStays();
+    res.json({ message: 'Ophold slettet' });
+});
+
+// ──────────────────────────────────────────────
+// MESSAGES – indlæs fra fil
+// ──────────────────────────────────────────────
+const MESSAGES_PATH = path.join(__dirname, 'messages.json');
+let messages = [];
+try {
+    messages = JSON.parse(fs.readFileSync(MESSAGES_PATH, 'utf8'));
+} catch {
+    messages = [];
+}
+const saveMessages = () => {
+    fs.writeFileSync(MESSAGES_PATH, JSON.stringify(messages, null, 2));
+};
+
+// ──────────────────────────────────────────────
+// CONTACT – POST (offentlig kontaktformular)
+// ──────────────────────────────────────────────
+server.post('/contact', (req, res) => {
+    const { name, email, category, message } = req.body;
+    if (!name || !email || !message) {
+        return res.status(400).json({ error: 'name, email og message er påkrævet' });
+    }
+    const newMessage = {
+        id: generateId(),
+        name,
+        email,
+        category: category || '',
+        message,
+        status: 'ny',
+        created: new Date().toISOString(),
+    };
+    messages.push(newMessage);
+    saveMessages();
+    res.status(201).json(newMessage);
+});
+
+// ──────────────────────────────────────────────
+// ADMIN/MESSAGES – GET alle beskeder
+// ──────────────────────────────────────────────
+server.get('/admin/messages', (req, res) => {
+    const sorted = [...messages].sort((a, b) => new Date(b.created) - new Date(a.created));
+    res.json(sorted);
+});
+
+// ──────────────────────────────────────────────
+// ADMIN/MESSAGES – PATCH status (ny | læst | besvaret | arkiveret)
+// ──────────────────────────────────────────────
+server.patch('/admin/messages/:id/status', (req, res) => {
+    const index = messages.findIndex(m => String(m.id) === String(req.params.id));
+    if (index === -1) return res.status(404).json({ error: 'Besked ikke fundet' });
+    messages[index].status = req.body.status || messages[index].status;
+    saveMessages();
+    res.json(messages[index]);
+});
+
+// ──────────────────────────────────────────────
+// ADMIN/MESSAGES – PATCH reply (gem svar-tekst og sæt status besvaret)
+// ──────────────────────────────────────────────
+server.patch('/admin/messages/:id/reply', (req, res) => {
+    const index = messages.findIndex(m => String(m.id) === String(req.params.id));
+    if (index === -1) return res.status(404).json({ error: 'Besked ikke fundet' });
+    const { reply } = req.body;
+    if (!reply || !reply.trim()) return res.status(400).json({ error: 'Svar-tekst er påkrævet' });
+    messages[index].reply = reply.trim();
+    messages[index].repliedAt = new Date().toISOString();
+    messages[index].status = 'besvaret';
+    saveMessages();
+    res.json(messages[index]);
+});
+
+// ──────────────────────────────────────────────
+// ADMIN/MESSAGES – DELETE (slet besked)
+// ──────────────────────────────────────────────
+server.delete('/admin/messages/:id', (req, res) => {
+    const index = messages.findIndex(m => String(m.id) === String(req.params.id));
+    if (index === -1) return res.status(404).json({ error: 'Besked ikke fundet' });
+    messages.splice(index, 1);
+    saveMessages();
+    res.json({ message: 'Besked slettet' });
+});
+
+// ──────────────────────────────────────────────
+// SUBSCRIBERS – indlæs fra fil
+// ──────────────────────────────────────────────
+const SUBSCRIBERS_PATH = path.join(__dirname, 'subscribers.json');
+let subscribers = [];
+try {
+    subscribers = JSON.parse(fs.readFileSync(SUBSCRIBERS_PATH, 'utf8'));
+} catch {
+    subscribers = [];
+}
+const saveSubscribers = () => {
+    fs.writeFileSync(SUBSCRIBERS_PATH, JSON.stringify(subscribers, null, 2));
+};
+
+// ──────────────────────────────────────────────
+// SUBSCRIBERS – POST (tilmeld nyhedsbrev)
+// ──────────────────────────────────────────────
+server.post('/subscribers', (req, res) => {
+    const { email } = req.body;
+    if (!email || !email.includes('@')) {
+        return res.status(400).json({ error: 'Gyldig e-mail er påkrævet' });
+    }
+    const already = subscribers.find(s => s.email.toLowerCase() === email.toLowerCase());
+    if (already) {
+        return res.status(409).json({ error: 'E-mailen er allerede tilmeldt' });
+    }
+    const newSub = {
+        id: generateId(),
+        email: email.trim().toLowerCase(),
+        subscribedAt: new Date().toISOString(),
+    };
+    subscribers.push(newSub);
+    saveSubscribers();
+    res.status(201).json(newSub);
+});
+
+// ──────────────────────────────────────────────
+// ADMIN/SUBSCRIBERS – GET alle
+// ──────────────────────────────────────────────
+server.get('/admin/subscribers', (req, res) => {
+    const sorted = [...subscribers].sort((a, b) => new Date(b.subscribedAt) - new Date(a.subscribedAt));
+    res.json(sorted);
+});
+
+// ──────────────────────────────────────────────
+// ADMIN/SUBSCRIBERS – DELETE
+// ──────────────────────────────────────────────
+server.delete('/admin/subscribers/:id', (req, res) => {
+    const index = subscribers.findIndex(s => String(s.id) === String(req.params.id));
+    if (index === -1) return res.status(404).json({ error: 'Abonnent ikke fundet' });
+    subscribers.splice(index, 1);
+    saveSubscribers();
+    res.json({ message: 'Abonnent fjernet' });
 });
 
 server.listen(port, () => {
