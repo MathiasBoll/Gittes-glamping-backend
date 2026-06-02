@@ -1,1 +1,15 @@
-[]
+[
+  {
+    "id": "1780392928095",
+    "name": "Mathias Boll",
+    "email": "mathiasboll@hotmail.com",
+    "stayId": "6926fb03bb43dafb6486f8e5",
+    "stayTitle": "Weekendtur",
+    "checkIn": "2026-06-03",
+    "checkOut": "2026-06-05",
+    "guests": 1,
+    "message": "",
+    "status": "ny",
+    "created": "2026-06-02T09:35:28.097Z"
+  }
+]
