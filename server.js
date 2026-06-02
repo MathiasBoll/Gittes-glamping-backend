@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const multer = require('multer');
 
 const server = express();
 const port = 3042;
@@ -11,6 +12,48 @@ server.use(cors({ origin: 'http://localhost:5173' }));
 
 // Gør at serveren kan læse JSON fra request body (POST/PUT)
 server.use(express.json());
+
+// Admin-token til beskyttelse af /admin/* ruter
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'glamping-admin-2026';
+const requireAdminToken = (req, res, next) => {
+    const auth = req.headers['authorization'] || '';
+    if (auth !== `Bearer ${ADMIN_TOKEN}`) {
+        return res.status(401).json({ error: 'Ugyldig eller manglende admin-token' });
+    }
+    next();
+};
+server.use('/admin', requireAdminToken);
+
+// Server uploadede billeder statisk
+server.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Multer – gem uploadede filer i /uploads med originalt filnavn + tidsstempel
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, path.join(__dirname, 'uploads'));
+    },
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname).toLowerCase();
+        cb(null, `${Date.now()}${ext}`);
+    },
+});
+const upload = multer({
+    storage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // maks 10 MB
+    fileFilter: (req, file, cb) => {
+        if (!file.mimetype.startsWith('image/')) {
+            return cb(new Error('Kun billedfiler er tilladt'));
+        }
+        cb(null, true);
+    },
+});
+
+// ── POST /upload ── modtager én fil (felt: "image"), returnerer URL
+server.post('/upload', upload.single('image'), (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'Ingen fil modtaget' });
+    const url = `http://localhost:${port}/uploads/${req.file.filename}`;
+    res.status(201).json({ url });
+});
 
 // Hjælpefunktion: gemmer ændringer til activities.json på disken
 // Så data ikke forsvinder når serveren genstarter
@@ -28,9 +71,11 @@ let reviews = require('./reviews.json');
 let stays = require('./stays.json');
 
 // ──────────────────────────────────────────────
-// ACTIVITIES – GET alle
+// ACTIVITIES – GET alle (støtter ?date=YYYY-MM-DD filter)
 // ──────────────────────────────────────────────
 server.get('/activities', (req, res) => {
+    const { date } = req.query;
+    if (date) return res.json(activities.filter(a => a.date === date));
     res.json(activities);
 });
 
@@ -165,10 +210,32 @@ server.delete('/reviews/:id', (req, res) => {
 });
 
 // ──────────────────────────────────────────────
-// STAYS – GET alle
+// ADMIN/REVIEWS – GET alle (inkl. skjulte, sorteret nyeste øverst)
+// ──────────────────────────────────────────────
+server.get('/admin/reviews', (req, res) => {
+    const sorted = [...reviews].sort((a, b) => new Date(b.created) - new Date(a.created));
+    res.json(sorted);
+});
+
+// ──────────────────────────────────────────────
+// STAYS – GET alle (støtter ?persons=N filter)
 // ──────────────────────────────────────────────
 server.get('/stays', (req, res) => {
+    const { persons } = req.query;
+    if (persons) return res.json(stays.filter(s => String(s.numberOfPersons) === String(persons)));
     res.json(stays);
+});
+
+// ──────────────────────────────────────────────
+// STAYS – GET ét ophold via id
+// ──────────────────────────────────────────────
+server.get('/stays/:id', (req, res) => {
+    const stay = stays.find(s =>
+        String(s.id) === String(req.params.id) ||
+        String(s._id) === String(req.params.id)
+    );
+    if (!stay) return res.status(404).json({ error: 'Ophold ikke fundet' });
+    res.json(stay);
 });
 
 // ──────────────────────────────────────────────
@@ -367,6 +434,78 @@ server.delete('/admin/subscribers/:id', (req, res) => {
     subscribers.splice(index, 1);
     saveSubscribers();
     res.json({ message: 'Abonnent fjernet' });
+});
+
+// ──────────────────────────────────────────────
+// BOOKINGS – indlæs fra fil
+// ──────────────────────────────────────────────
+const BOOKINGS_PATH = path.join(__dirname, 'bookings.json');
+let bookings = [];
+try {
+    bookings = JSON.parse(fs.readFileSync(BOOKINGS_PATH, 'utf8'));
+} catch {
+    bookings = [];
+}
+const saveBookings = () => {
+    fs.writeFileSync(BOOKINGS_PATH, JSON.stringify(bookings, null, 2));
+};
+
+// ──────────────────────────────────────────────
+// BOOKINGS – POST (opret booking)
+// ──────────────────────────────────────────────
+server.post('/bookings', (req, res) => {
+    const { name, email, stayId, checkIn, checkOut, guests, message } = req.body;
+    if (!name || !email || !stayId || !checkIn || !checkOut) {
+        return res.status(400).json({ error: 'name, email, stayId, checkIn og checkOut er påkrævet' });
+    }
+    const stay = stays.find(s => String(s.id) === String(stayId) || String(s._id) === String(stayId));
+    if (!stay) return res.status(404).json({ error: 'Ophold ikke fundet' });
+    const newBooking = {
+        id: generateId(),
+        name,
+        email,
+        stayId,
+        stayTitle: stay.title,
+        checkIn,
+        checkOut,
+        guests: guests || 1,
+        message: message || '',
+        status: 'ny',
+        created: new Date().toISOString(),
+    };
+    bookings.push(newBooking);
+    saveBookings();
+    res.status(201).json(newBooking);
+});
+
+// ──────────────────────────────────────────────
+// ADMIN/BOOKINGS – GET alle (sorteret nyeste øverst)
+// ──────────────────────────────────────────────
+server.get('/admin/bookings', (req, res) => {
+    const sorted = [...bookings].sort((a, b) => new Date(b.created) - new Date(a.created));
+    res.json(sorted);
+});
+
+// ──────────────────────────────────────────────
+// ADMIN/BOOKINGS – PATCH status (ny | bekræftet | aflyst)
+// ──────────────────────────────────────────────
+server.patch('/admin/bookings/:id/status', (req, res) => {
+    const index = bookings.findIndex(b => String(b.id) === String(req.params.id));
+    if (index === -1) return res.status(404).json({ error: 'Booking ikke fundet' });
+    bookings[index].status = req.body.status || bookings[index].status;
+    saveBookings();
+    res.json(bookings[index]);
+});
+
+// ──────────────────────────────────────────────
+// ADMIN/BOOKINGS – DELETE
+// ──────────────────────────────────────────────
+server.delete('/admin/bookings/:id', (req, res) => {
+    const index = bookings.findIndex(b => String(b.id) === String(req.params.id));
+    if (index === -1) return res.status(404).json({ error: 'Booking ikke fundet' });
+    bookings.splice(index, 1);
+    saveBookings();
+    res.json({ message: 'Booking slettet' });
 });
 
 server.listen(port, () => {

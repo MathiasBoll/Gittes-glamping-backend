@@ -1,0 +1,218 @@
+{
+  "info": {
+    "name": "Gittes Glamping API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base", "value": "http://localhost:3042" }
+  ],
+  "item": [
+    {
+      "name": "Activities",
+      "item": [
+        {
+          "name": "GET all activities",
+          "request": { "method": "GET", "url": "{{base}}/activities" }
+        },
+        {
+          "name": "GET activity by id",
+          "request": { "method": "GET", "url": "{{base}}/activities/:id" }
+        },
+        {
+          "name": "POST create activity",
+          "request": {
+            "method": "POST",
+            "url": "{{base}}/activities",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Kajaktur\",\n  \"date\": \"2026-07-01\",\n  \"time\": \"10:00\",\n  \"description\": \"En dejlig kajaktur på fjorden\",\n  \"image\": \"https://example.com/kajak.jpg\"\n}"
+            }
+          }
+        },
+        {
+          "name": "PUT update activity",
+          "request": {
+            "method": "PUT",
+            "url": "{{base}}/activities/:id",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Opdateret titel\"\n}"
+            }
+          }
+        },
+        {
+          "name": "DELETE activity",
+          "request": { "method": "DELETE", "url": "{{base}}/activities/:id" }
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "GET all reviews",
+          "request": { "method": "GET", "url": "{{base}}/reviews" }
+        },
+        {
+          "name": "POST create review",
+          "request": {
+            "method": "POST",
+            "url": "{{base}}/reviews",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Mette Hansen\",\n  \"age\": 42,\n  \"stay\": \"Glamping telt\",\n  \"review\": \"Fantastisk oplevelse!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "PUT update review",
+          "request": {
+            "method": "PUT",
+            "url": "{{base}}/reviews/:id",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isVisible\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "DELETE review",
+          "request": { "method": "DELETE", "url": "{{base}}/reviews/:id" }
+        }
+      ]
+    },
+    {
+      "name": "Stays",
+      "item": [
+        {
+          "name": "GET all stays",
+          "request": { "method": "GET", "url": "{{base}}/stays" }
+        },
+        {
+          "name": "POST create stay",
+          "request": {
+            "method": "POST",
+            "url": "{{base}}/stays",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Luksus glamping telt\",\n  \"numberOfPersons\": 2,\n  \"price\": 1500,\n  \"image\": \"https://example.com/telt.jpg\",\n  \"teaser\": \"Nyd naturen i luksus\"\n}"
+            }
+          }
+        },
+        {
+          "name": "PUT update stay",
+          "request": {
+            "method": "PUT",
+            "url": "{{base}}/stays/:id",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 1800\n}"
+            }
+          }
+        },
+        {
+          "name": "DELETE stay",
+          "request": { "method": "DELETE", "url": "{{base}}/stays/:id" }
+        }
+      ]
+    },
+    {
+      "name": "Contact & Messages",
+      "item": [
+        {
+          "name": "POST send contact message",
+          "request": {
+            "method": "POST",
+            "url": "{{base}}/contact",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Lars Nielsen\",\n  \"email\": \"lars@example.com\",\n  \"category\": \"Booking\",\n  \"message\": \"Jeg vil gerne booke en plads i juli\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET all messages (admin)",
+          "request": { "method": "GET", "url": "{{base}}/admin/messages" }
+        },
+        {
+          "name": "PATCH update message status",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base}}/admin/messages/:id/status",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"læst\"\n}"
+            }
+          }
+        },
+        {
+          "name": "PATCH reply to message",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base}}/admin/messages/:id/reply",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reply\": \"Hej Lars, tak for din henvendelse!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "DELETE message",
+          "request": { "method": "DELETE", "url": "{{base}}/admin/messages/:id" }
+        }
+      ]
+    },
+    {
+      "name": "Subscribers",
+      "item": [
+        {
+          "name": "POST subscribe to newsletter",
+          "request": {
+            "method": "POST",
+            "url": "{{base}}/subscribers",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nyhedsbrev@example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET all subscribers (admin)",
+          "request": { "method": "GET", "url": "{{base}}/admin/subscribers" }
+        },
+        {
+          "name": "DELETE subscriber",
+          "request": { "method": "DELETE", "url": "{{base}}/admin/subscribers/:id" }
+        }
+      ]
+    },
+    {
+      "name": "Upload",
+      "item": [
+        {
+          "name": "POST upload image",
+          "request": {
+            "method": "POST",
+            "url": "{{base}}/upload",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "image", "type": "file", "src": "" }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
