@@ -5,6 +5,7 @@ const path       = require('path');
 const multer     = require('multer');
 
 const connectDatabase = require('./database');
+const bulkImportRoutes = require('./routes/bulkImportRoutes');
 const Activity   = require('./models/Activity');
 const Review     = require('./models/Review');
 const Stay       = require('./models/Stay');
@@ -22,6 +23,9 @@ server.use(cors({ origin: 'http://localhost:5173' }));
 
 // Gør at serveren kan læse JSON fra request body (POST/PUT)
 server.use(express.json());
+
+// Bulk import ruter (POST /bulk/:type og POST /bulk-all)
+server.use(bulkImportRoutes);
 
 // Admin-token til beskyttelse af /admin/* ruter
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'glamping-admin-2026';
