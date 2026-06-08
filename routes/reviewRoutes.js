@@ -9,4 +9,10 @@ router.post('/reviews',         createReview);
 router.put('/reviews/:id',      updateReview);
 router.delete('/reviews/:id',   deleteReview);
 
+// Singular aliases (bruges af frontend)
+router.get('/review/:id',    getReviewById);
+router.post('/review',       createReview);
+router.put('/review/:id',    updateReview);
+router.delete('/review/:id', deleteReview);
+
 module.exports = router;
