@@ -1,8 +1,9 @@
 ﻿require('dotenv').config();
-const express = require('express');
-const cors    = require('cors');
-const path    = require('path');
-const multer  = require('multer');
+const express      = require('express');
+const cors         = require('cors');
+const path         = require('path');
+const multer       = require('multer');
+const cookieParser = require('cookie-parser');
 
 const connectDatabase  = require('./database');
 const bulkImportRoutes = require('./routes/bulkImportRoutes');
@@ -12,28 +13,28 @@ const reviewRoutes     = require('./routes/reviewRoutes');
 const messageRoutes    = require('./routes/messageRoutes');
 const subscriberRoutes = require('./routes/subscriberRoutes');
 const bookingRoutes    = require('./routes/bookingRoutes');
+const authRoutes       = require('./routes/authRoutes');
+const userRoutes       = require('./routes/userRoutes');
+const myListRoutes     = require('./routes/myListRoutes');
 
 const server = express();
-const port   = 3042;
+const port   = process.env.PORT || 3042;
 
 connectDatabase();
 
-// Tillader frontend paa localhost:5173 at kalde API'et
-server.use(cors({ origin: 'http://localhost:5173' }));
+// Tillader frontend at kalde API'et – sæt CORS_ORIGIN i .env (komma-separeret)
+const allowedOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
+    : ['http://localhost:5173'];
+server.use(cors({ origin: allowedOrigins, credentials: true }));
+server.use(cookieParser());
 
 // Goer at serveren kan laese JSON fra request body (POST/PUT)
 server.use(express.json());
 
-// Admin-token til beskyttelse af /admin/* ruter
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'glamping-admin-2026';
-const requireAdminToken = (req, res, next) => {
-    const auth = req.headers['authorization'] || '';
-    if (auth !== `Bearer ${ADMIN_TOKEN}`) {
-        return res.status(401).json({ error: 'Ugyldig eller manglende admin-token' });
-    }
-    next();
-};
-server.use('/admin', requireAdminToken);
+// /admin/* ruter kræver admin JWT (se middleware/authMiddleware.js)
+const { requireAdmin } = require('./middleware/authMiddleware');
+server.use('/admin', requireAdmin);
 
 // Server uploadede billeder statisk
 server.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -66,6 +67,9 @@ server.post('/upload', upload.single('image'), (req, res) => {
 });
 
 // Ruter
+server.use(authRoutes);
+server.use(userRoutes);
+server.use(myListRoutes);
 server.use(bulkImportRoutes);
 server.use(activityRoutes);
 server.use(stayRoutes);
@@ -75,6 +79,6 @@ server.use(subscriberRoutes);
 server.use(bookingRoutes);
 
 // Start server
-server.listen(port, () => {
+server.listen(port, '0.0.0.0', () => {
     console.log('Serveren koerer paa port http://localhost:' + port);
 });

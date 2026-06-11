@@ -1,78 +1,1210 @@
 {
   "info": {
     "name": "Gittes Glamping API",
+    "_postman_id": "gittes-glamping-2026",
+    "description": "Full collection for Gittes Glamping backend.\n\nEnvironment variables needed:\n- baseUrl  → http://localhost:3042\n- token    → set automatically by Sign In\n- stayId   → set automatically by Create Stay\n- activityId → set automatically by Create Activity\n- reviewId → set automatically by Create Review\n- bookingId  → set automatically by Create Booking\n- messageId  → set automatically by Send Message\n- subscriberId → set automatically by Subscribe\n- userId   → set automatically by Register\n- myListId  → set automatically by Create MyList",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "base", "value": "http://localhost:3042" }
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3042",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "stayId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "activityId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reviewId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bookingId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "messageId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "subscriberId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "myListId",
+      "value": "",
+      "type": "string"
+    }
   ],
   "item": [
     {
-      "name": "Activities",
+      "name": "Auth",
+      "description": "Sign in and token verification. Sign In auto-saves {{token}}.",
       "item": [
         {
-          "name": "GET all activities",
-          "request": { "method": "GET", "url": "{{base}}/activities" }
-        },
-        {
-          "name": "GET activity by id",
-          "request": { "method": "GET", "url": "{{base}}/activities/:id" }
-        },
-        {
-          "name": "POST create activity",
+          "name": "Sign In",
+          "description": "POST /auth/signin — returns JWT. Token is auto-saved to {{token}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Has token', () => { var j = pm.response.json(); pm.expect(j.data).to.have.property('token'); });",
+                  "var j = pm.response.json(); if (j.data && j.data.token) pm.collectionVariables.set('token', j.data.token);",
+                  "pm.test('Status is ok', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "url": "{{base}}/activities",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/signin",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "signin"
+              ]
+            },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Kajaktur\",\n  \"date\": \"2026-07-01\",\n  \"time\": \"10:00\",\n  \"description\": \"En dejlig kajaktur på fjorden\",\n  \"image\": \"https://example.com/kajak.jpg\"\n}"
+              "raw": "{\n  \"email\": \"admin@gittes.dk\",\n  \"password\": \"hemmeligt\"\n}"
             }
           }
         },
         {
-          "name": "PUT update activity",
+          "name": "Verify Token",
+          "description": "POST /auth/token — validates existing JWT and returns user.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Status is ok', () => pm.expect(pm.response.json().status).to.eql('ok'));",
+                  "pm.test('Has field: status', () => { var j = pm.response.json(); pm.expect(j).to.have.property('status'); });",
+                  "pm.test('Has field: data', () => { var j = pm.response.json(); pm.expect(j).to.have.property('data'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "token"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{token}}\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "description": "User registration and management. Register auto-saves {{userId}}.",
+      "item": [
+        {
+          "name": "Register (opret bruger)",
+          "description": "POST /users — public. Creates a new user. Auto-saves {{userId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Has field: _id', () => { var j = pm.response.json(); pm.expect(j).to.have.property('_id'); });",
+                  "pm.test('Has field: name', () => { var j = pm.response.json(); pm.expect(j).to.have.property('name'); });",
+                  "pm.test('Has field: email', () => { var j = pm.response.json(); pm.expect(j).to.have.property('email'); });",
+                  "pm.test('Has field: role', () => { var j = pm.response.json(); pm.expect(j).to.have.property('role'); });",
+                  "var j = pm.response.json(); if (j._id) pm.collectionVariables.set('userId', j._id);",
+                  "pm.test('No password in response', () => pm.expect(pm.response.json()).to.not.have.property('hashedPassword'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Bruger\",\n  \"email\": \"test@gittes.dk\",\n  \"password\": \"hemmeligt123\",\n  \"role\": \"user\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Me",
+          "description": "GET /users/me — requires JWT. Returns the logged-in user from token.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Has field: _id', () => { var j = pm.response.json(); pm.expect(j).to.have.property('_id'); });",
+                  "pm.test('Has field: email', () => { var j = pm.response.json(); pm.expect(j).to.have.property('email'); });",
+                  "pm.test('Has field: name', () => { var j = pm.response.json(); pm.expect(j).to.have.property('name'); });",
+                  "pm.test('Has field: role', () => { var j = pm.response.json(); pm.expect(j).to.have.property('role'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Users (admin)",
+          "description": "GET /users — admin JWT required.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Response is array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID (admin)",
+          "description": "GET /users/:id — admin JWT required. Uses {{userId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Has field: _id', () => { var j = pm.response.json(); pm.expect(j).to.have.property('_id'); });",
+                  "pm.test('Has field: email', () => { var j = pm.response.json(); pm.expect(j).to.have.property('email'); });",
+                  "pm.test('Has field: name', () => { var j = pm.response.json(); pm.expect(j).to.have.property('name'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "description": "PUT /users/:id — JWT required (own user or admin). Uses {{userId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Name updated', () => pm.expect(pm.response.json().name).to.eql('Opdateret Navn'));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "PUT",
-            "url": "{{base}}/activities/:id",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Opdateret titel\"\n}"
+              "raw": "{\n  \"name\": \"Opdateret Navn\"\n}"
             }
           }
         },
         {
-          "name": "DELETE activity",
-          "request": { "method": "DELETE", "url": "{{base}}/activities/:id" }
+          "name": "Delete User (admin)",
+          "description": "DELETE /users/:id — admin JWT required. Uses {{userId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Deleted message exists', () => pm.expect(pm.response.json()).to.have.property('message'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "My List (favoritter)",
+      "description": "Personal saved lists — all routes require JWT. Create/Update auto-saves {{myListId}}.",
+      "item": [
+        {
+          "name": "Create / Update My List",
+          "description": "POST /mylists — creates list or updates existing by name. Auto-saves {{myListId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Has field: _id', () => { var j = pm.response.json(); pm.expect(j).to.have.property('_id'); });",
+                  "pm.test('Has field: name', () => { var j = pm.response.json(); pm.expect(j).to.have.property('name'); });",
+                  "pm.test('Has field: userId', () => { var j = pm.response.json(); pm.expect(j).to.have.property('userId'); });",
+                  "var j = pm.response.json(); if (j._id) pm.collectionVariables.set('myListId', j._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/mylists",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mylists"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Mine favoritter\",\n  \"stayIds\": [],\n  \"activityIds\": []\n}"
+            }
+          }
+        },
+        {
+          "name": "Get My Lists",
+          "description": "GET /mylists — returns all lists for logged-in user.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Response is array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/mylists",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mylists"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get My List by ID",
+          "description": "GET /mylists/:id — uses {{myListId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Has field: _id', () => { var j = pm.response.json(); pm.expect(j).to.have.property('_id'); });",
+                  "pm.test('Has field: name', () => { var j = pm.response.json(); pm.expect(j).to.have.property('name'); });",
+                  "pm.test('Has field: userId', () => { var j = pm.response.json(); pm.expect(j).to.have.property('userId'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/mylists/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mylists",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete My List",
+          "description": "DELETE /mylists/:id — uses {{myListId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Deleted message exists', () => pm.expect(pm.response.json()).to.have.property('message'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/mylists/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mylists",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stays",
+      "description": "Accommodation listings. Create auto-saves {{stayId}}.",
+      "item": [
+        {
+          "name": "Get All Stays",
+          "description": "GET /stays — public.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Response is array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/stays",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "stays"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Stay by ID",
+          "description": "GET /stays/:id — uses {{stayId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Has field: _id', () => { var j = pm.response.json(); pm.expect(j).to.have.property('_id'); });",
+                  "pm.test('Has field: title', () => { var j = pm.response.json(); pm.expect(j).to.have.property('title'); });",
+                  "pm.test('Has field: price', () => { var j = pm.response.json(); pm.expect(j).to.have.property('price'); });",
+                  "pm.test('Has field: image', () => { var j = pm.response.json(); pm.expect(j).to.have.property('image'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/stays/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "stays",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Stay",
+          "description": "POST /stays — auto-saves {{stayId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Has field: _id', () => { var j = pm.response.json(); pm.expect(j).to.have.property('_id'); });",
+                  "pm.test('Has field: title', () => { var j = pm.response.json(); pm.expect(j).to.have.property('title'); });",
+                  "pm.test('Has field: price', () => { var j = pm.response.json(); pm.expect(j).to.have.property('price'); });",
+                  "pm.test('Has field: numberOfPersons', () => { var j = pm.response.json(); pm.expect(j).to.have.property('numberOfPersons'); });",
+                  "var j = pm.response.json(); if (j._id) pm.collectionVariables.set('stayId', j._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/stays",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "stays"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Test Glamping Telt\",\n  \"teaser\": \"Kort teaser\",\n  \"description\": \"Lang beskrivelse\",\n  \"numberOfPersons\": \"2\",\n  \"price\": 1200,\n  \"discountInPercent\": 0,\n  \"includes\": [\n    \"Morgenmad\",\n    \"Wifi\"\n  ],\n  \"image\": \"/uploads/test-stay.jpg\",\n  \"isActive\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Stay",
+          "description": "PUT /stays/:id — uses {{stayId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Price updated', () => pm.expect(pm.response.json().price).to.eql(1500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/stays/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "stays",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 1500\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Stay",
+          "description": "DELETE /stays/:id — uses {{stayId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Deleted message exists', () => pm.expect(pm.response.json()).to.have.property('message'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/stays/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "stays",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Activities",
+      "description": "Activities/experiences. Create auto-saves {{activityId}}.",
+      "item": [
+        {
+          "name": "Get All Activities",
+          "description": "GET /activities — public.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Response is array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/activities",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "activities"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Activity by ID",
+          "description": "GET /activities/:id — uses {{activityId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Has field: _id', () => { var j = pm.response.json(); pm.expect(j).to.have.property('_id'); });",
+                  "pm.test('Has field: title', () => { var j = pm.response.json(); pm.expect(j).to.have.property('title'); });",
+                  "pm.test('Has field: date', () => { var j = pm.response.json(); pm.expect(j).to.have.property('date'); });",
+                  "pm.test('Has field: time', () => { var j = pm.response.json(); pm.expect(j).to.have.property('time'); });",
+                  "pm.test('Has field: description', () => { var j = pm.response.json(); pm.expect(j).to.have.property('description'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/activities/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "activities",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Activity",
+          "description": "POST /activities — auto-saves {{activityId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Has field: _id', () => { var j = pm.response.json(); pm.expect(j).to.have.property('_id'); });",
+                  "pm.test('Has field: title', () => { var j = pm.response.json(); pm.expect(j).to.have.property('title'); });",
+                  "pm.test('Has field: date', () => { var j = pm.response.json(); pm.expect(j).to.have.property('date'); });",
+                  "pm.test('Has field: time', () => { var j = pm.response.json(); pm.expect(j).to.have.property('time'); });",
+                  "pm.test('Has field: description', () => { var j = pm.response.json(); pm.expect(j).to.have.property('description'); });",
+                  "pm.test('Has field: image', () => { var j = pm.response.json(); pm.expect(j).to.have.property('image'); });",
+                  "var j = pm.response.json(); if (j._id) pm.collectionVariables.set('activityId', j._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/activities",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "activities"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Kajaktur\",\n  \"date\": \"2026-07-01\",\n  \"time\": \"10:00\",\n  \"description\": \"En dejlig kajaktur på fjorden\",\n  \"image\": \"/uploads/kajak.jpg\",\n  \"isActive\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Activity",
+          "description": "PUT /activities/:id — uses {{activityId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Date updated', () => pm.expect(pm.response.json().date).to.eql('2026-08-01'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/activities/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "activities",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2026-08-01\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Activity",
+          "description": "DELETE /activities/:id — uses {{activityId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Deleted message exists', () => pm.expect(pm.response.json()).to.have.property('message'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/activities/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "activities",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
         }
       ]
     },
     {
       "name": "Reviews",
+      "description": "Guest reviews. Create auto-saves {{reviewId}}.",
       "item": [
         {
-          "name": "GET all reviews",
-          "request": { "method": "GET", "url": "{{base}}/reviews" }
-        },
-        {
-          "name": "POST create review",
+          "name": "Get All Reviews (public)",
+          "description": "GET /reviews — only isVisible:true.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Response is array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "pm.test('Only visible reviews', () => { pm.response.json().forEach(r => pm.expect(r.isVisible).to.be.true); });"
+                ]
+              }
+            }
+          ],
           "request": {
-            "method": "POST",
-            "url": "{{base}}/reviews",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Mette Hansen\",\n  \"age\": 42,\n  \"stay\": \"Glamping telt\",\n  \"review\": \"Fantastisk oplevelse!\"\n}"
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews"
+              ]
             }
           }
         },
         {
-          "name": "PUT update review",
+          "name": "Get All Reviews – admin (inkl. skjulte)",
+          "description": "GET /admin/reviews — admin JWT required. Returns all including hidden.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Response is array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "reviews"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Review by ID",
+          "description": "GET /reviews/:id — uses {{reviewId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Has field: _id', () => { var j = pm.response.json(); pm.expect(j).to.have.property('_id'); });",
+                  "pm.test('Has field: name', () => { var j = pm.response.json(); pm.expect(j).to.have.property('name'); });",
+                  "pm.test('Has field: review', () => { var j = pm.response.json(); pm.expect(j).to.have.property('review'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/reviews/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Review",
+          "description": "POST /reviews — public. Auto-saves {{reviewId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Has field: _id', () => { var j = pm.response.json(); pm.expect(j).to.have.property('_id'); });",
+                  "pm.test('Has field: name', () => { var j = pm.response.json(); pm.expect(j).to.have.property('name'); });",
+                  "pm.test('Has field: review', () => { var j = pm.response.json(); pm.expect(j).to.have.property('review'); });",
+                  "pm.test('Has field: isVisible', () => { var j = pm.response.json(); pm.expect(j).to.have.property('isVisible'); });",
+                  "var j = pm.response.json(); if (j._id) pm.collectionVariables.set('reviewId', j._id);",
+                  "pm.test('isVisible is true by default', () => pm.expect(pm.response.json().isVisible).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Mette Hansen\",\n  \"age\": \"42\",\n  \"stay\": \"Test Glamping Telt\",\n  \"review\": \"Fantastisk oplevelse!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Review (skjul)",
+          "description": "PUT /reviews/:id — admin JWT required. Uses {{reviewId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('isVisible set to false', () => pm.expect(pm.response.json().isVisible).to.be.false);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "PUT",
-            "url": "{{base}}/reviews/:id",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"isVisible\": false\n}"
@@ -80,73 +1212,372 @@
           }
         },
         {
-          "name": "DELETE review",
-          "request": { "method": "DELETE", "url": "{{base}}/reviews/:id" }
+          "name": "Delete Review",
+          "description": "DELETE /reviews/:id — admin JWT required. Uses {{reviewId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Deleted message exists', () => pm.expect(pm.response.json()).to.have.property('message'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
         }
       ]
     },
     {
-      "name": "Stays",
+      "name": "Bookings",
+      "description": "Guest bookings. Create auto-saves {{bookingId}}.",
       "item": [
         {
-          "name": "GET all stays",
-          "request": { "method": "GET", "url": "{{base}}/stays" }
-        },
-        {
-          "name": "POST create stay",
+          "name": "Create Booking",
+          "description": "POST /bookings — public. Auto-saves {{bookingId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Has field: _id', () => { var j = pm.response.json(); pm.expect(j).to.have.property('_id'); });",
+                  "pm.test('Has field: name', () => { var j = pm.response.json(); pm.expect(j).to.have.property('name'); });",
+                  "pm.test('Has field: email', () => { var j = pm.response.json(); pm.expect(j).to.have.property('email'); });",
+                  "pm.test('Has field: stayId', () => { var j = pm.response.json(); pm.expect(j).to.have.property('stayId'); });",
+                  "pm.test('Has field: checkIn', () => { var j = pm.response.json(); pm.expect(j).to.have.property('checkIn'); });",
+                  "pm.test('Has field: checkOut', () => { var j = pm.response.json(); pm.expect(j).to.have.property('checkOut'); });",
+                  "pm.test('Has field: status', () => { var j = pm.response.json(); pm.expect(j).to.have.property('status'); });",
+                  "var j = pm.response.json(); if (j._id) pm.collectionVariables.set('bookingId', j._id);",
+                  "pm.test('Default status is ny', () => pm.expect(pm.response.json().status).to.eql('ny'));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "url": "{{base}}/stays",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings"
+              ]
+            },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Luksus glamping telt\",\n  \"numberOfPersons\": 2,\n  \"price\": 1500,\n  \"image\": \"https://example.com/telt.jpg\",\n  \"teaser\": \"Nyd naturen i luksus\"\n}"
+              "raw": "{\n  \"name\": \"Lars Nielsen\",\n  \"email\": \"lars@example.dk\",\n  \"stayId\": \"{{stayId}}\",\n  \"checkIn\": \"2026-07-01\",\n  \"checkOut\": \"2026-07-05\",\n  \"guests\": 2,\n  \"message\": \"Vi glæder os!\"\n}"
             }
           }
         },
         {
-          "name": "PUT update stay",
+          "name": "Get All Bookings (admin)",
+          "description": "GET /admin/bookings — admin JWT required.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Response is array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
           "request": {
-            "method": "PUT",
-            "url": "{{base}}/stays/:id",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"price\": 1800\n}"
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "bookings"
+              ]
             }
           }
         },
         {
-          "name": "DELETE stay",
-          "request": { "method": "DELETE", "url": "{{base}}/stays/:id" }
-        }
-      ]
-    },
-    {
-      "name": "Contact & Messages",
-      "item": [
-        {
-          "name": "POST send contact message",
-          "request": {
-            "method": "POST",
-            "url": "{{base}}/contact",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Lars Nielsen\",\n  \"email\": \"lars@example.com\",\n  \"category\": \"Booking\",\n  \"message\": \"Jeg vil gerne booke en plads i juli\"\n}"
+          "name": "Update Booking Status (admin)",
+          "description": "PATCH /admin/bookings/:id/status — uses {{bookingId}}. Valid: ny, bekræftet, aflyst.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Status updated', () => pm.expect(pm.response.json().status).to.eql('bekræftet'));"
+                ]
+              }
             }
-          }
-        },
-        {
-          "name": "GET all messages (admin)",
-          "request": { "method": "GET", "url": "{{base}}/admin/messages" }
-        },
-        {
-          "name": "PATCH update message status",
+          ],
           "request": {
             "method": "PATCH",
-            "url": "{{base}}/admin/messages/:id/status",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/bookings/:id/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "bookings",
+                ":id",
+                "status"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"bekræftet\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Booking (admin)",
+          "description": "DELETE /admin/bookings/:id — uses {{bookingId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Deleted message exists', () => pm.expect(pm.response.json()).to.have.property('message'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/bookings/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "bookings",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Messages (Kontakt)",
+      "description": "Contact form messages. Send auto-saves {{messageId}}.",
+      "item": [
+        {
+          "name": "Send Message",
+          "description": "POST /contact — public. Auto-saves {{messageId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Has field: _id', () => { var j = pm.response.json(); pm.expect(j).to.have.property('_id'); });",
+                  "pm.test('Has field: name', () => { var j = pm.response.json(); pm.expect(j).to.have.property('name'); });",
+                  "pm.test('Has field: email', () => { var j = pm.response.json(); pm.expect(j).to.have.property('email'); });",
+                  "pm.test('Has field: message', () => { var j = pm.response.json(); pm.expect(j).to.have.property('message'); });",
+                  "pm.test('Has field: status', () => { var j = pm.response.json(); pm.expect(j).to.have.property('status'); });",
+                  "var j = pm.response.json(); if (j._id) pm.collectionVariables.set('messageId', j._id);",
+                  "pm.test('Default status is ny', () => pm.expect(pm.response.json().status).to.eql('ny'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/contact",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "contact"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sofie Andersen\",\n  \"email\": \"sofie@example.dk\",\n  \"category\": \"Booking\",\n  \"message\": \"Er der ledige telte i august?\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All Messages (admin)",
+          "description": "GET /admin/messages — admin JWT required.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Response is array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "messages"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Message Status (admin)",
+          "description": "PATCH /admin/messages/:id/status — uses {{messageId}}. Valid: ny, læst, besvaret, arkiveret.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Status updated', () => pm.expect(pm.response.json().status).to.eql('læst'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/messages/:id/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "messages",
+                ":id",
+                "status"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"læst\"\n}"
@@ -154,61 +1585,419 @@
           }
         },
         {
-          "name": "PATCH reply to message",
+          "name": "Reply to Message (admin)",
+          "description": "PATCH /admin/messages/:id/reply — uses {{messageId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Reply saved', () => pm.expect(pm.response.json().reply).to.not.be.empty);",
+                  "pm.test('Status is besvaret', () => pm.expect(pm.response.json().status).to.eql('besvaret'));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "PATCH",
-            "url": "{{base}}/admin/messages/:id/reply",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/messages/:id/reply",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "messages",
+                ":id",
+                "reply"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"reply\": \"Hej Lars, tak for din henvendelse!\"\n}"
+              "raw": "{\n  \"reply\": \"Hej Sofie, ja vi har ledige pladser!\"\n}"
             }
           }
         },
         {
-          "name": "DELETE message",
-          "request": { "method": "DELETE", "url": "{{base}}/admin/messages/:id" }
+          "name": "Delete Message (admin)",
+          "description": "DELETE /admin/messages/:id — uses {{messageId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Deleted message exists', () => pm.expect(pm.response.json()).to.have.property('message'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/messages/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "messages",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
         }
       ]
     },
     {
-      "name": "Subscribers",
+      "name": "Subscribers (Nyhedsbrev)",
+      "description": "Newsletter signups. Subscribe auto-saves {{subscriberId}}.",
       "item": [
         {
-          "name": "POST subscribe to newsletter",
+          "name": "Subscribe",
+          "description": "POST /subscribers — public. Auto-saves {{subscriberId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Has field: _id', () => { var j = pm.response.json(); pm.expect(j).to.have.property('_id'); });",
+                  "pm.test('Has field: email', () => { var j = pm.response.json(); pm.expect(j).to.have.property('email'); });",
+                  "pm.test('Has field: subscribedAt', () => { var j = pm.response.json(); pm.expect(j).to.have.property('subscribedAt'); });",
+                  "var j = pm.response.json(); if (j._id) pm.collectionVariables.set('subscriberId', j._id);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "url": "{{base}}/subscribers",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/subscribers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subscribers"
+              ]
+            },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"nyhedsbrev@example.com\"\n}"
+              "raw": "{\n  \"email\": \"ny@subscriber.dk\"\n}"
             }
           }
         },
         {
-          "name": "GET all subscribers (admin)",
-          "request": { "method": "GET", "url": "{{base}}/admin/subscribers" }
+          "name": "Get All Subscribers (admin)",
+          "description": "GET /admin/subscribers — admin JWT required.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Response is array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/subscribers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "subscribers"
+              ]
+            }
+          }
         },
         {
-          "name": "DELETE subscriber",
-          "request": { "method": "DELETE", "url": "{{base}}/admin/subscribers/:id" }
+          "name": "Update Subscriber (admin)",
+          "description": "PATCH /admin/subscribers/:id — uses {{subscriberId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/subscribers/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "subscribers",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Subscriber (admin)",
+          "description": "DELETE /admin/subscribers/:id — uses {{subscriberId}}.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Deleted message exists', () => pm.expect(pm.response.json()).to.have.property('message'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/subscribers/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "subscribers",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
         }
       ]
     },
     {
       "name": "Upload",
+      "description": "Image file upload. Returns a URL path.",
       "item": [
         {
-          "name": "POST upload image",
+          "name": "Upload Image",
+          "description": "POST /upload — multipart/form-data, field name: image. Returns { url: \"/uploads/...\" }.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Has url field', () => pm.expect(pm.response.json()).to.have.property('url'));",
+                  "pm.test('URL starts with /uploads/', () => pm.expect(pm.response.json().url).to.include('/uploads/'));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "url": "{{base}}/upload",
+            "url": {
+              "raw": "{{baseUrl}}/upload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "upload"
+              ]
+            },
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "image", "type": "file", "src": "" }
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": ""
+                }
               ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bulk Import",
+      "description": "Seed multiple records in one call.",
+      "item": [
+        {
+          "name": "Bulk Import – én type",
+          "description": "POST /bulk/:type — set :type to stays, activities, or reviews. Body is an array of objects.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bulk/:type",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bulk",
+                ":type"
+              ],
+              "variable": [
+                {
+                  "key": "type",
+                  "value": ""
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "[]"
+            }
+          }
+        },
+        {
+          "name": "Bulk Import – alle typer",
+          "description": "POST /bulk-all — body: { stays: [], activities: [], reviews: [] }.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.test('Body is JSON', () => pm.response.to.be.json);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bulk-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bulk-all"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stays\": [],\n  \"activities\": [],\n  \"reviews\": []\n}"
             }
           }
         }
